@@ -1,0 +1,23 @@
+{
+  "name": "node-api-capeonado-de-piadas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon ./src/app.js",
+    "start": "node ./src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.458.0",
+    "bcrypt": "^3.0.6",
+    "busca-br": "^0.2.1",
+    "faker": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^7.11.0",
+    "restify": "^8.3.2",
+    "sequelize": "^5.8.6"
+  }
+}
