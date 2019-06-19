@@ -15,6 +15,7 @@ router.post('/api/v1/piadas', (request, response, next) => {
 //Ultimas piadas adicionadas
 router.get('/api/v1/piadas/ultimas/:pagina/:lastId', (request, response, next) => {
     piadas.listarPiadasUltimas(request.params.pagina, request.params.lastId).then(data => {
+            response.setHeader('Cache-Control', 'max-age=30')
             response.send(200, apiResponse(0, 'Busca realizada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha ao buscar -> ' + error));
@@ -25,6 +26,7 @@ router.get('/api/v1/piadas/ultimas/:pagina/:lastId', (request, response, next) =
 //Rank das piadas melhores avaliadas dos últimos 7 dias
 router.get('/api/v1/piadas/semana/:pagina', (request, response, next) => {
     piadas.listarPiadasSemana(request.params.pagina, request.query).then(data => {
+            response.setHeader('Cache-Control', 'max-age=30')
             response.send(200, apiResponse(0, 'Busca realizada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha ao buscar -> ' + error));
@@ -35,6 +37,7 @@ router.get('/api/v1/piadas/semana/:pagina', (request, response, next) => {
 //Rank das piadas melhores avaliadas dos últimos 30 dias
 router.get('/api/v1/piadas/mes/:pagina', (request, response, next) => {
     piadas.listarPiadasMes(request.params.pagina, request.query).then(data => {
+            response.setHeader('Cache-Control', 'max-age=30')
             response.send(200, apiResponse(0, 'Busca realizada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha ao buscar -> ' + error));
@@ -45,6 +48,7 @@ router.get('/api/v1/piadas/mes/:pagina', (request, response, next) => {
 //Piadas premiadas
 router.get('/api/v1/piadas/premiadas/:pagina', (request, response, next) => {
     piadas.listarPiadasPremiadas(request.params.pagina, request.query).then(data => {
+            response.setHeader('Cache-Control', 'max-age=30')
             response.send(200, apiResponse(0, 'Busca realizada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha ao buscar -> ' + error));

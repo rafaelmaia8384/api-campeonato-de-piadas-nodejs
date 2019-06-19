@@ -50,7 +50,7 @@ function apiGenerateRandomFileName(ext) {
         result += char;
     }
 
-    return result + '-' + Date.now() + ext;
+    return Date.now() + '-' + result + ext;
 }
 
 module.exports = {

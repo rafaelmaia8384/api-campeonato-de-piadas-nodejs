@@ -9,9 +9,19 @@ const piadasEstrelas = require('../models/piadas').modelPiadasEstrelas;
 const apiUtils = require('../utils/apiUtils');
 
 function cadastrarPiada(piada) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
+    
+        do {
+            var id_piada = apiUtils.apiGenerateId();
+            result = await piadas.findOne({
+                where: {
+                    id_piada: id_piada
+                }
+            });
+        }
+        while(result != null)
 
-        piada.id_piada = apiUtils.apiGenerateId();
+        piada.id_piada = id_piada;
         piada.audio_file = apiUtils.apiGenerateRandomFileName('.mp3');
 
         if (piada.img_busca) piada.img_busca = apiUtils.apiGenerateRandomFileName('.jpg');
@@ -26,29 +36,35 @@ function cadastrarPiada(piada) {
                 signatureVersion: 'v4',
                 s3ForcePathStyle: true
             });
+
+            var url_audio = s3.getSignedUrl('putObject', {
+                Bucket: options.optUploadBucket,
+                Expires: 180,
+                ContentType: 'audio/mpeg',
+                ACL: 'public-read', 
+                Key: options.optAppName + '/audios/' + piada.audio_file
+            });
     
             var url_img_busca = piada.img_busca ? s3.getSignedUrl('putObject', {
                 Bucket: options.optUploadBucket,
                 Expires: 180,
+                ContentType: 'image/jpeg',
+                ACL: 'public-read', 
                 Key: options.optAppName + '/imagens/' + piada.img_busca
             }) : null;
     
             var url_img_principal = piada.img_principal ? s3.getSignedUrl('putObject', {
                 Bucket: options.optUploadBucket,
                 Expires: 180,
+                ContentType: 'image/jpeg',
+                ACL: 'public-read', 
                 Key: options.optAppName + '/imagens/' + piada.img_principal
             }) : null;
-    
-            var url_audio = s3.getSignedUrl('putObject', {
-                Bucket: options.optUploadBucket,
-                Expires: 180,
-                Key: options.optAppName + '/audios/' + piada.audio_file
-            });
-            
+
             resolve({
+                url_audio: url_audio,
                 url_img_busca: url_img_busca,
-                url_img_principal: url_img_principal,
-                url_audio: url_audio
+                url_img_principal: url_img_principal
             });
         }).catch((error) => {
             reject(error);
