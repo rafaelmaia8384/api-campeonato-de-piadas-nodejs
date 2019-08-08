@@ -10,6 +10,14 @@ let modelPiadas = db.define('piadas', {
         type: type.BIGINT,
         allowNull: false
     },
+    nome_usuario: {
+        type: type.STRING,
+        allowNull: false
+    },
+    id_blur_image: {
+        type: type.INTEGER,
+        allowNull: false
+    },
     img_busca: {
         type: type.STRING,
         allowNull: true
@@ -22,6 +30,10 @@ let modelPiadas = db.define('piadas', {
         type: type.STRING,
         allowNull: false
     },
+    audio_duracao: {
+        type: type.INTEGER,
+        allowNull: false
+    },
     titulo: {
         type: type.STRING,
         allowNull: false
@@ -30,19 +42,47 @@ let modelPiadas = db.define('piadas', {
         type: type.STRING,
         allowNull: false
     },
+    musica_fundo: {
+        type: type.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+    },
+    conteudo_sensivel: {
+        type: type.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
+    visualizacoes: {
+        type: type.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+    },
+    premiada: {
+        type: type.BOOLEAN,
+        defaultValue: false
+    },
     upload_ok: {
         type: type.BOOLEAN,
         defaultValue: false
     },
+    ativacao_ok: {
+        type: type.BOOLEAN,
+        defaultValue: false
+    },
+    ativacao_aparelho: {
+        type: type.STRING,
+        allowNull: true,
+        defaultValue: null
+    },
     createdAt: {
         type: type.DATE,
         allowNull: false,
-        defaultValue: db.fn('NOW'),
+        defaultValue: db.fn('NOW')
     },
     updatedAt: {
         type: type.DATE,
         allowNull: false,
-        defaultValue: db.fn('NOW'),
+        defaultValue: db.fn('NOW')
     }
 }, {
     paranoid: true,
@@ -50,7 +90,7 @@ let modelPiadas = db.define('piadas', {
 }, {
     indexes: [
         {
-            fields: ['id_piada', 'id_usuario']
+            fields: ['id_piada', 'id_usuario', 'ativacao_aparelho']
         },
         {
             type: 'FULLTEXT', 
@@ -66,6 +106,10 @@ let modelPiadasComentarios = db.define('piadas_comentarios', {
     },
     id_usuario: {
         type: type.BIGINT,
+        allowNull: false
+    },
+    nome_usuario: {
+        type: type.STRING,
         allowNull: false
     },
     comentario: {
@@ -138,7 +182,7 @@ let modelPiadasEstrelas = db.define('piadas_estrelas', {
 });
 
 module.exports = { 
-    Op: db.Sequelize.Op,
+    sequelize: db.Sequelize,
     modelPiadas: modelPiadas,
     modelPiadasComentarios: modelPiadasComentarios,
     modelPiadasEstrelas: modelPiadasEstrelas

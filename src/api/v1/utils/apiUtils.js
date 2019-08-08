@@ -7,11 +7,22 @@ const options = require('../../config/options');
 const apiCheckToken = (request, response, next) => {
     jwt.verify(request.headers.authorization, options.optJwtSecret, (error, decoded) => {
         if (error) {
-            if (error.name === 'TokenExpiredError') return response.send(401, apiResponse(1, 'Tempo de conexão expirado.'));
-            else return response.send(401, apiResponse(1, 'Acesso negado: token inválido.'));
+            return response.send(401, apiResponse(1, 'Acesso negado: token inválido.'));
         }
         else {
-            request.userData = decoded;
+            request.usuario = decoded;
+            next();
+        }
+    });
+};
+
+const apiCheckTokenNotBlock = (request, response, next) => {
+    jwt.verify(request.headers.authorization, options.optJwtSecret, (error, decoded) => {
+        if (error) {
+            next();
+        }
+        else {
+            request.usuario = decoded;
             next();
         }
     });
@@ -56,6 +67,7 @@ function apiGenerateRandomFileName(ext) {
 module.exports = {
     apiResponse: apiResponse,
     apiCheckToken: apiCheckToken,
+    apiCheckTokenNotBlock: apiCheckTokenNotBlock,
     apiGenerateId: apiGenerateId,
     apiGenerateRandomFileName: apiGenerateRandomFileName
 };

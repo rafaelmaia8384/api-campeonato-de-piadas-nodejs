@@ -10,6 +10,11 @@ server.use(restify.plugins.bodyParser({
     overrideParams: false
 }));
 
+server.pre((request, response, next) => {
+    response.charSet('utf-8');
+    next();
+});
+
 server.on('NotFound', function(request, response){
     response.send(404, {
         error: 1,

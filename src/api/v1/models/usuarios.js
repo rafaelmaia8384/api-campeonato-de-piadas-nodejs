@@ -6,11 +6,7 @@ let modelUsuarios = db.define('usuarios', {
         type: type.BIGINT,
         allowNull: false
     },
-    oauth_provider: {
-        type: type.STRING,
-        allowNull: false
-    },
-    oauth_uid: {
+    googleId: {
         type: type.STRING,
         allowNull: false
     },
@@ -20,11 +16,13 @@ let modelUsuarios = db.define('usuarios', {
     },
     email: {
         type: type.STRING,
+        unique: true,
         allowNull: false
     },
-    password: {
-        type: type.STRING,
-        allowNull: false
+    credito: {
+        type: type.INTEGER,
+        allowNull: false,
+        defaultValue: 0
     },
     createdAt: {
         type: type.DATE,
@@ -39,6 +37,12 @@ let modelUsuarios = db.define('usuarios', {
 }, {
     paranoid: true,
     freezeTableName: true
+}, {
+    indexes: [
+        {
+            fields: ['tokenId']
+        }
+    ]
 });
 
 module.exports = {

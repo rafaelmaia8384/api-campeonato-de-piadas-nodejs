@@ -7,7 +7,7 @@ router.post('/api/v1/sistema/ativarcodigo', (request, response, next) => {
     sistema.ativarCodigo(request.params).then(data => {
             response.send(200, apiResponse(0, 'Busca realizada.', data));
         }).catch(error => {
-            response.send(500, apiResponse(1, 'Falha ao buscar -> ' + error));
+            response.send(500, apiResponse(1, 'Falha -> ' + error));
         });
     next();
 });

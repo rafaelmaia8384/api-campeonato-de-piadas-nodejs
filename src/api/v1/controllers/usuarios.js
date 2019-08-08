@@ -1,19 +1,98 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const usuarios = require('../models/usuarios').modelUsuarios;
+const piadas = require('../models/piadas').modelPiadas;
 const options = require('../../config/options');
+const apiUtils = require('../utils/apiUtils');
 
-function buscarUsuarios() { 
+function login(googleId, username, email) { 
     return new Promise((resolve, reject) => {
-        usuarios.findAll().then(response => {
-            resolve(response);
-        }).catch(error => {
+        usuarios.findOne({
+            where: {
+                googleId: googleId,
+                username: username,
+                email: email
+            },
+        }).then(async (usuario) => {
+            if (usuario) {
+                const token = jwt.sign({
+                    id_usuario: usuario.id_usuario,
+                    username: username
+                }, options.optJwtSecret);
+
+                var enviadas = await piadas.count({
+                    where: {
+                        id_usuario: usuario.id_usuario,
+                        upload_ok: true
+                    }
+                });
+
+                var confirmadas = await piadas.count({
+                    where: {
+                        id_usuario: usuario.id_usuario,
+                        upload_ok: true,
+                        ativacao_ok: true
+                    }
+                });
+
+                var premiadas = await piadas.count({
+                    where: {
+                        id_usuario: usuario.id_usuario,
+                        upload_ok: true,
+                        ativacao_ok: true,
+                        premiada: true
+                    }
+                });
+
+                var visualizacoes = await piadas.sum('visualizacoes', {
+                    where: {
+                        id_usuario: usuario.id_usuario,
+                        upload_ok: true
+                    }
+                });
+
+                resolve({
+                    id_usuario: usuario.id_usuario, 
+                    token: token,
+                    enviadas: enviadas,
+                    confirmadas: confirmadas,
+                    premiadas: premiadas,
+                    credito: usuario.credito,
+                    visualizacoes: visualizacoes ? visualizacoes : 0
+                });
+            }
+            else {
+                do {
+                    var id_usuario = apiUtils.apiGenerateId();
+                    result = await usuarios.findOne({
+                        where: {
+                            id_usuario: id_usuario
+                        }
+                    });
+                }
+                while(result != null)
+                usuarios.create({
+                    id_usuario: id_usuario,
+                    googleId: googleId,
+                    username: username,
+                    email: email
+                }).then((usuario) => {
+                    const token = jwt.sign({
+                        id_usuario: usuario.id_usuario,
+                        username: username
+                    }, options.optJwtSecret);
+                    resolve({id_usuario: usuario.id_usuario, token: token});
+                }).catch((error) => {
+                    reject(error);
+                });
+            };
+        }).catch((error) => {
             reject(error);
         });
     });
 }
 
-function login(email, password) {
+function loginOld(email, password) {
     return new Promise((resolve, reject) => {
         usuarios.findAll({
             where: {
@@ -52,6 +131,6 @@ function login(email, password) {
 }
 
 module.exports = { 
-    buscarUsuarios: buscarUsuarios,
-    login: login
+    login: login,
+    loginOld: loginOld
 };
