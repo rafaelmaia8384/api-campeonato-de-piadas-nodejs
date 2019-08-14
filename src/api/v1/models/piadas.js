@@ -74,6 +74,16 @@ let modelPiadas = db.define('piadas', {
         allowNull: true,
         defaultValue: null
     },
+    denuncias: {
+        type: type.INTEGER,
+        allowNull: false,
+        defaultValue: 0
+    },
+    premiadaAt: {
+        type: type.DATE,
+        allowNull: true,
+        defaultValue: null
+    },
     createdAt: {
         type: type.DATE,
         allowNull: false,
@@ -152,8 +162,8 @@ let modelPiadasEstrelas = db.define('piadas_estrelas', {
         type: type.BIGINT,
         allowNull: false
     },
-    id_usuario: {
-        type: type.BIGINT,
+    id_aparelho: {
+        type: type.STRING,
         allowNull: false
     },
     estrelas: {

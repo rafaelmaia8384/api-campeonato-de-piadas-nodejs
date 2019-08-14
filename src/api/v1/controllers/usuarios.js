@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const usuarios = require('../models/usuarios').modelUsuarios;
+const usuariosSaques = require('../models/usuarios').modelUsuariosSaques;
 const piadas = require('../models/piadas').modelPiadas;
 const options = require('../../config/options');
 const apiUtils = require('../utils/apiUtils');
@@ -51,6 +52,12 @@ function login(googleId, username, email) {
                     }
                 });
 
+                var saques_solicitados = await usuariosSaques.findAll({
+                    where: {
+                        id_usuario: usuario.id_usuario,
+                    }
+                });
+
                 resolve({
                     id_usuario: usuario.id_usuario, 
                     token: token,
@@ -58,6 +65,7 @@ function login(googleId, username, email) {
                     confirmadas: confirmadas,
                     premiadas: premiadas,
                     credito: usuario.credito,
+                    saques_solicitados: saques_solicitados,
                     visualizacoes: visualizacoes ? visualizacoes : 0
                 });
             }
@@ -92,39 +100,50 @@ function login(googleId, username, email) {
     });
 }
 
-function loginOld(email, password) {
-    return new Promise((resolve, reject) => {
-        usuarios.findAll({
+function obterCredito(id_usuario) {
+    return new Promise(async(resolve, reject) => {
+        usuarios.findOne({
             where: {
-                email: email
+                id_usuario: id_usuario,
             },
-            limit: 1
-        }).then(response => {
-            if (response.length > 0) {
-                bcrypt.compare(password, response[0].password, (error, result) => {
-                    if (error) {
-                        reject(error.message);        
-                    }
-                    else {
-                        if (result) {
-                            const token = jwt.sign({
-                                id_usuario: response[0].id_usuario,
-                                email: response[0].email
-                            }, options.optJwtSecret, {
-                                expiresIn: '1h'
-                            });
-                            resolve([{ token: token }]);
-                        }
-                        else {
-                            resolve([]);
-                        }
-                    }
-                });
+            attributes: ['credito']
+        }).then((result) => {
+            if (result) {
+                resolve(result);
             }
             else {
-                resolve([]);
+                reject();
             }
-        }).catch(error => {
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+function solicitarSaque(dados, id_usuario) {
+    return new Promise(async(resolve, reject) => {
+        var credito = await usuarios.findOne({
+            where: {
+                id_usuario: id_usuario
+            }
+        });
+        credito = credito.toJSON();
+        if (credito.credito == 0) {
+            reject('Acesso negado.');
+            return;
+        }
+        dados.id_usuario = id_usuario;
+        dados.valor = credito.credito;
+        usuariosSaques.create(dados).then(() => {
+            usuarios.update({
+                credito: 0
+            }, {
+                where: {
+                    id_usuario: id_usuario
+                }
+            });
+            resolve();
+        }).catch((error) => {
             reject(error);
         });
     });
@@ -132,5 +151,6 @@ function loginOld(email, password) {
 
 module.exports = { 
     login: login,
-    loginOld: loginOld
+    obterCredito: obterCredito,
+    solicitarSaque: solicitarSaque
 };

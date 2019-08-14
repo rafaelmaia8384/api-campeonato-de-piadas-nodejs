@@ -1,7 +1,6 @@
 const router = require('../../config/server').server;
 const apiResponse = require('../utils/apiUtils').apiResponse;
 const apiCheckToken = require('../utils/apiUtils').apiCheckToken;
-const apiCheckTokenNotBlock = require('../utils/apiUtils').apiCheckTokenNotBlock;
 const piadas = require('../controllers/piadas');
 
 //Cadastrar piada
@@ -18,13 +17,20 @@ router.post('/api/v1/piadas', (apiCheckToken), (request, response, next) => {
 //Confirmar cadastro da piada
 //Lembrar de confirmar o token do usuário
 router.put('/api/v1/piadas/:id_piada', (apiCheckToken), (request, response, next) => {
-    console.log('confirmar piada (rota)');
     piadas.confirmarPiada(request.params.id_piada).then(data => {
-            console.log('confirmar piada (then)');
             response.send(200, apiResponse(0, 'Piada confirmada.', data));
         }).catch(error => {
-            console.log('confirmar piada (catch)');
             response.send(500, apiResponse(1, 'Falha -> ' + error));
+        });
+    next();
+});
+
+//Ativar piada
+router.put('/api/v1/piadas/ativar/:codigo/:id_aparelho', (request, response, next) => {
+    piadas.ativarPiada(request.params.codigo, request.params.id_aparelho).then(data => {
+            response.send(200, apiResponse(0, 'Piada Ativada.', data));
+        }).catch(error => {
+            response.send(500, apiResponse(1, error));
         });
     next();
 });
@@ -73,9 +79,8 @@ router.del('/api/v1/piadas/comentarios/:id', (apiCheckToken), (request, response
 });
 
 //Ver piada pelo ID
-router.get('/api/v1/piadas/:id_piada', (apiCheckTokenNotBlock), (request, response, next) => {
-    var id_usuario = request.usuario ? request.usuario.id_usuario : null; 
-    piadas.verPiada(id_usuario, request.params.id_piada).then(data => {
+router.get('/api/v1/piadas/:id_piada/:id_aparelho', (request, response, next) => {
+    piadas.verPiada(request.params.id_piada, request.params.id_aparelho).then(data => {
             response.setHeader('Cache-Control', 'max-age=10');
             response.send(200, apiResponse(0, 'Piada obtida.', data));
         }).catch(error => {
@@ -84,12 +89,34 @@ router.get('/api/v1/piadas/:id_piada', (apiCheckTokenNotBlock), (request, respon
     next();
 });
 
+//Buscar piada por palavras
+router.get('/api/v1/piadas/buscar/:palavras', (request, response, next) => {
+    piadas.buscarPiadas(request.params.palavras).then(data => {
+            response.setHeader('Cache-Control', 'max-age=10');
+            response.send(200, apiResponse(0, 'Piadas encontradas.', data));
+        }).catch(error => {
+            response.send(500, apiResponse(1, 'Falha -> ' + error));
+        });
+    next();
+});
+
 //Votar estrelas na piada pelo ID
-//Lembrar de confirmar o token do usuário
-router.put('/api/v1/piadas/votacao/:id_piada/:estrelas', (apiCheckToken), (request, response, next) => {
-    piadas.votarPiada(request.usuario.id_usuario, request.params.id_piada, request.params.estrelas).then(data => {
+router.put('/api/v1/piadas/votacao/:id_piada/:id_aparelho/:estrelas', (request, response, next) => {
+    piadas.votarPiada(request.params.id_piada, request.params.id_aparelho, request.params.estrelas).then(data => {
             response.setHeader('Cache-Control', 'max-age=10');
             response.send(200, apiResponse(0, 'Piada votada.', data));
+        }).catch(error => {
+            response.send(500, apiResponse(1, 'Falha -> ' + error));
+        });
+    next();
+});
+
+//Denunciar piada pelo ID
+//Lembrar de confirmar o token do usuário
+router.put('/api/v1/piadas/denuncia/:id_piada', (apiCheckToken), (request, response, next) => {
+    piadas.denunciarPiada(request.params.id_piada).then(data => {
+            response.setHeader('Cache-Control', 'max-age=10');
+            response.send(200, apiResponse(0, 'Piada denunciada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha -> ' + error));
         });
@@ -129,32 +156,11 @@ router.get('/api/v1/piadas/semana/:pagina', (request, response, next) => {
     next();
 });
 
-//Rank das piadas melhores avaliadas dos últimos 30 dias
-router.get('/api/v1/piadas/mes/:pagina', (request, response, next) => {
-    piadas.listarPiadasMes(request.params.pagina, request.query).then(data => {
-            response.setHeader('Cache-Control', 'max-age=10')
-            response.send(200, apiResponse(0, 'Busca realizada.', data));
-        }).catch(error => {
-            response.send(500, apiResponse(1, 'Falha -> ' + error));
-        });
-    next();
-});
-
 //Piadas premiadas
 router.get('/api/v1/piadas/premiadas/:pagina', (request, response, next) => {
     piadas.listarPiadasPremiadas(request.params.pagina, request.query).then(data => {
             response.setHeader('Cache-Control', 'max-age=10')
             response.send(200, apiResponse(0, 'Busca realizada.', data));
-        }).catch(error => {
-            response.send(500, apiResponse(1, 'Falha -> ' + error));
-        });
-    next();
-});
-
-//Gerar conteúdo na tabela de piadas
-router.get('/api/v1/piadas/seed', (request, response, next) => {
-    piadas.seed().then(data => {
-            response.send(200, apiResponse(0, 'Seed realizado.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, 'Falha -> ' + error));
         });

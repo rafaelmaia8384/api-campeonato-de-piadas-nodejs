@@ -13,12 +13,14 @@
   "dependencies": {
     "aws-sdk": "^2.458.0",
     "bcrypt": "^3.0.6",
+    "big-integer": "^1.6.44",
     "busca-br": "^0.2.1",
     "faker": "^4.1.0",
     "jsonwebtoken": "^8.5.1",
     "mysql2": "^1.6.5",
+    "node-cron": "^2.0.3",
     "pg": "^7.11.0",
     "restify": "^8.3.2",
-    "sequelize": "^5.8.6"
+    "sequelize": "^5.14.0"
   }
 }

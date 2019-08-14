@@ -20,6 +20,26 @@ function ativarCodigo(codigo) {
     });
 }
 
+function obterPremio() {
+    return new Promise((resolve, reject) => {
+        sistema.findOne({
+            where: {
+                id: 1
+            }
+        }).then((result) => {
+            if (result) {
+                resolve(result);
+            }
+            else {
+                reject();
+            }
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
 module.exports = { 
-    ativarCodigo: ativarCodigo
+    ativarCodigo: ativarCodigo,
+    obterPremio: obterPremio
 };

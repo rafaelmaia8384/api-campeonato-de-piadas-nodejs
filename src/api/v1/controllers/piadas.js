@@ -1,5 +1,7 @@
 const faker = require('faker');
 const AWS = require('aws-sdk');
+const bigInt = require('big-integer');
+const seq = require('../../config/db');
 const options = require('../../config/options');
 const sequelize = require('../models/piadas').sequelize;
 const usuarios = require('../models/usuarios').modelUsuarios;
@@ -91,6 +93,60 @@ function confirmarPiada(id_piada) {
     });
 }
 
+function ativarPiada(codigo, id_aparelho) {
+    return new Promise(async(resolve, reject) => {
+        if (codigo.length != 16) {
+            reject('Código inválido.');
+        }
+        var aparelhoExistente = await piadas.findOne({
+            where: {
+                ativacao_aparelho: id_aparelho
+            }
+        });
+        if (aparelhoExistente) {
+            reject('Você já utilizou um código de ativação.');
+            return;
+        }
+
+        var id_piada = codigo.substring(0, 8);
+        id_piada = bigInt(id_piada, 16);
+        var id_usuario = codigo.substring(8, 16);
+        id_usuario = bigInt(id_usuario, 16);
+
+        var usuario = await usuarios.findOne({
+            where: {
+                id_usuario: id_usuario
+            }
+        });
+        if (!usuario) {
+            reject('Código de ativação inválido.');
+            return;
+        }
+        var piada = await piadas.findOne({
+            where: {
+                id_piada: id_piada
+            }
+        });
+        if (!piada) {
+            reject('Código de ativação inválido.');
+            return;
+        }
+
+        piadas.update({
+            ativacao_ok: true,
+            ativacao_aparelho: id_aparelho
+        }, {
+            where: {
+                id_piada: id_piada
+            }
+        }).then(()=> {
+            resolve();
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
 function excluirPiada(id_piada) {
     return new Promise((resolve, reject) => {
         piadas.update({
@@ -165,7 +221,7 @@ function excluirComentario(id, id_usuario) {
     });
 }
 
-function verPiada(id_usuario, id_piada) {
+function verPiada(id_piada, id_aparelho) {
     return new Promise((resolve, reject) => {
         piadas.findOne({
             where: {
@@ -178,27 +234,15 @@ function verPiada(id_usuario, id_piada) {
                         id_piada: id_piada
                     }
                 });
-                var media = 0;
-                var estrelasArray = await piadasEstrelas.findAll({
-                    where: {
-                        id_piada: id_piada
-                    },
-                    attributes: ['estrelas']
-                });
-                for (var i = 0; i < estrelasArray.length; i++) {
-                    media += estrelasArray[i].estrelas;
-                }
-                media /= estrelasArray.length;
-                piada = piada.toJSON();
-                piada.votos = estrelasArray.length ? estrelasArray.length : 0;
-                piada.media = media ? media : 0;
-                piada.meu_voto = 0;
-
-                if (id_usuario) {
+                seq.query(`SELECT AVG(estrelas) as media, COUNT(estrelas) as total FROM piadas_estrelas WHERE id_piada = ${id_piada}`).then(([results, metadata]) => {
+                    piada = piada.toJSON();
+                    piada.media = results[0]['media'] ? results[0]['media'] : 0;
+                    piada.votos = results[0]['total'];
+                    piada.meu_voto = 0;
                     piadasEstrelas.findOne({
                         where: {
-                            id_usuario: id_usuario,
-                            id_piada: id_piada
+                            id_piada: id_piada,
+                            id_aparelho: id_aparelho
                         }
                     }).then((meuVoto) => {
                         if (meuVoto) {
@@ -208,27 +252,28 @@ function verPiada(id_usuario, id_piada) {
                     }).catch((error) => {
                         reject(error)
                     });
-                }
-                else {
-                    resolve(piada);
-                }
+                }).catch((error) => {
+                    reject(error);
+                });
             }
-            else reject('Piada não encontrada.');
+            else {
+                reject('Piada não encontrada.');
+            }
         }).catch((error) => {
             reject(error);
         });
     });
 }
 
-function votarPiada(id_usuario, id_piada, estrelas) {
+function votarPiada(id_piada, id_aparelho, estrelas) {
     return new Promise((resolve, reject) => {
         if (estrelas < 1 || estrelas > 5) {
             reject('Número de estrelas inválido.');
         }
         piadasEstrelas.findOne({
             where: {
-                id_usuario: id_usuario,
-                id_piada: id_piada
+                id_piada: id_piada,
+                id_aparelho
             }
         }).then((piadaEstrelas) => {
             if (piadaEstrelas) {
@@ -243,7 +288,7 @@ function votarPiada(id_usuario, id_piada, estrelas) {
             else {
                 piadasEstrelas.create({
                     id_piada: id_piada,
-                    id_usuario: id_usuario,
+                    id_aparelho: id_aparelho,
                     estrelas: estrelas
                 }).then(() => {
                     resolve();
@@ -251,6 +296,34 @@ function votarPiada(id_usuario, id_piada, estrelas) {
                     reject(error)
                 });
             }
+        });
+    });
+}
+
+function denunciarPiada(id_piada) {
+    return new Promise((resolve, reject) => {
+        piadas.increment(['denuncias'], {
+            where: {
+                id_piada: id_piada
+            }
+        }).then(() => {
+            resolve();
+        }).catch((error) => {
+            reject(error);
+        });
+    });
+}
+
+function buscarPiadas(palavras) {
+    return new Promise((resolve, reject) => {
+        piadas.findAll({
+            where: seq.literal([`titulo LIKE "%${palavras}%" OR palavras_chave LIKE "%${palavras}%" AND upload_ok = 1`]),
+            order: [['visualizacoes', 'DESC']],
+            limit: 50,
+        }).then((result) => {
+            resolve(result);
+        }).catch((error) => {
+            reject(error);
         });
     });
 }
@@ -277,13 +350,13 @@ function listarPiadasEnviadas(userId) {
 }
 
 function listarPiadasUltimas(lastId) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         piadas.findAll({
             where: {
                 id: {
                     [sequelize.Op.lt]: lastId == 0 ? 9999999 : lastId
                 },
-                upload_ok: true
+                upload_ok: true,
             },
             //offset: (pagina-1) * options.optSearchLimit,
             limit: options.optSearchLimit,
@@ -301,29 +374,11 @@ function listarPiadasUltimas(lastId) {
 
 function listarPiadasSemana(pagina) {
     return new Promise((resolve, reject) => {
-        piadas.findAll({
-            where: {},
-            offset: (pagina-1) * options.optSearchLimit,
-            limit: options.optSearchLimit,
-            order: [['id', 'DESC']]
-        }).then(response => {
-            resolve(response);
-        }).catch(error => {
-            reject(error);
-        });
-    });
-}
-
-function listarPiadasMes(pagina) {
-    return new Promise((resolve, reject) => {
-        piadas.findAll({
-            where: {},
-            offset: (pagina-1) * options.optSearchLimit,
-            limit: options.optSearchLimit,
-            order: [['id', 'DESC']]
-        }).then(response => {
-            resolve(response);
-        }).catch(error => {
+        var offset = pagina * options.optSearchLimit;
+        var limit = options.optSearchLimit;
+        seq.query(`SELECT piadas.*, AVG(piadas_estrelas.estrelas) as media FROM piadas INNER JOIN piadas_estrelas ON piadas.id_piada = piadas_estrelas.id_piada WHERE piadas_estrelas.createdAt >= DATE(NOW()) - INTERVAL 7 DAY GROUP BY piadas.id ORDER BY piadas.visualizacoes * media DESC LIMIT ${offset}, ${limit};`).then(([results, metadata]) => {
+            resolve(results);
+        }).catch((error) => {
             reject(error);
         });
     });
@@ -332,10 +387,12 @@ function listarPiadasMes(pagina) {
 function listarPiadasPremiadas(pagina) {
     return new Promise((resolve, reject) => {
         piadas.findAll({
-            where: {},
-            offset: (pagina-1) * options.optSearchLimit,
+            where: {
+                premiada: true
+            },
+            offset: pagina * options.optSearchLimit,
             limit: options.optSearchLimit,
-            order: [['id', 'DESC']]
+            order: [['premiadaAt', 'DESC']]
         }).then(response => {
             resolve(response);
         }).catch(error => {
@@ -377,13 +434,15 @@ function randRange(min, max) {
 module.exports = { 
     cadastrarPiada: cadastrarPiada,
     confirmarPiada: confirmarPiada,
+    ativarPiada: ativarPiada,
     verPiada: verPiada,
     votarPiada: votarPiada,
+    denunciarPiada: denunciarPiada,
     excluirPiada: excluirPiada,
+    buscarPiadas: buscarPiadas,
     listarPiadasEnviadas: listarPiadasEnviadas,
     listarPiadasUltimas: listarPiadasUltimas,
     listarPiadasSemana: listarPiadasSemana,
-    listarPiadasMes: listarPiadasMes,
     listarPiadasPremiadas: listarPiadasPremiadas,
     obterComentarios: obterComentarios,
     enviarComentario: enviarComentario,
