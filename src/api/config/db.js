@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('campeonato_de_piadas', 'root', 'rafael110786MYSQL', {
+const sequelize = new Sequelize('campeonato_de_piadas_test', 'root', 'rafael110786MYSQL', {
     host: 'localhost',
     port: 3306,
     dialect: 'mysql',
