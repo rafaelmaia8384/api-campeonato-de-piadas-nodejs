@@ -1,6 +1,11 @@
+const fs = require('fs');
+const https = require('https');
 const restify = require('restify');
 const port = process.env.PORT || 3000;
-const server = restify.createServer();
+const server = restify.createServer({
+    key: fs.readFileSync(__dirname + '/ssl/server.key', 'utf8'),
+    certificate: fs.readFileSync(__dirname + '/ssl/server.cert', 'utf8')
+});
 
 server.use(restify.plugins.queryParser());
 
