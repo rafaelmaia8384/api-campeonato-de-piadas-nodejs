@@ -26,8 +26,8 @@ router.put('/api/v1/piadas/:id_piada', (apiCheckToken), (request, response, next
 });
 
 //Ativar piada
-router.put('/api/v1/piadas/ativar/:codigo/:id_aparelho', (request, response, next) => {
-    piadas.ativarPiada(request.params.codigo, request.params.id_aparelho).then(data => {
+router.put('/api/v1/piadas/ativar/:id_piada/:id_aparelho', (request, response, next) => {
+    piadas.ativarPiada(request.params.id_piada, request.params.id_aparelho).then(data => {
             response.send(200, apiResponse(0, 'Piada Ativada.', data));
         }).catch(error => {
             response.send(500, apiResponse(1, error));

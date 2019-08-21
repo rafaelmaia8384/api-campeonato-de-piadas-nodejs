@@ -93,9 +93,9 @@ function confirmarPiada(id_piada) {
     });
 }
 
-function ativarPiada(codigo, id_aparelho) {
+function ativarPiada(id_piada, id_aparelho) {
     return new Promise(async(resolve, reject) => {
-        if (codigo.length != 16) {
+        if (id_piada.length != 8) {
             reject('Código inválido.');
         }
         var aparelhoExistente = await piadas.findOne({
@@ -107,21 +107,7 @@ function ativarPiada(codigo, id_aparelho) {
             reject('Você já utilizou um código de ativação.');
             return;
         }
-
-        var id_piada = codigo.substring(0, 8);
         id_piada = bigInt(id_piada, 16);
-        var id_usuario = codigo.substring(8, 16);
-        id_usuario = bigInt(id_usuario, 16);
-
-        var usuario = await usuarios.findOne({
-            where: {
-                id_usuario: id_usuario
-            }
-        });
-        if (!usuario) {
-            reject('Código de ativação inválido.');
-            return;
-        }
         var piada = await piadas.findOne({
             where: {
                 id_piada: id_piada
@@ -131,7 +117,6 @@ function ativarPiada(codigo, id_aparelho) {
             reject('Código de ativação inválido.');
             return;
         }
-
         piadas.update({
             ativacao_ok: true,
             ativacao_aparelho: id_aparelho
@@ -187,10 +172,14 @@ function enviarComentario(id_piada, id_usuario, comentario) {
             }
         });
         if (usuario) {
+            var username = usuario.email;
+            if (usuario.username && usuario.username != 'null') {
+                username = usuario.username;
+            }
             piadasComentarios.create({
                 id_piada: id_piada,
                 id_usuario: id_usuario,
-                nome_usuario: usuario.username,
+                nome_usuario: username,
                 comentario: comentario
             }).then((comentario) => {
                 resolve(comentario);
