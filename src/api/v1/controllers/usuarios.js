@@ -61,11 +61,11 @@ function login(googleId, username, email) {
                 resolve({
                     id_usuario: usuario.id_usuario, 
                     token: token,
-                    enviadas: enviadas,
-                    confirmadas: confirmadas,
-                    premiadas: premiadas,
+                    enviadas: enviadas ? enviadas : 0,
+                    confirmadas: confirmadas ? confirmadas : 0,
+                    premiadas: premiadas ? premiadas : 0,
                     credito: usuario.credito,
-                    saques_solicitados: saques_solicitados,
+                    saques_solicitados: saques_solicitados ? saques_solicitados : 0,
                     visualizacoes: visualizacoes ? visualizacoes : 0
                 });
             }
