@@ -365,7 +365,7 @@ function listarPiadasSemana(pagina) {
     return new Promise((resolve, reject) => {
         var offset = pagina * options.optSearchLimit;
         var limit = options.optSearchLimit;
-        seq.query(`SELECT piadas.*, AVG(piadas_estrelas.estrelas) as media FROM piadas INNER JOIN piadas_estrelas ON piadas.id_piada = piadas_estrelas.id_piada WHERE piadas_estrelas.createdAt >= DATE(NOW()) - INTERVAL 7 DAY GROUP BY piadas.id ORDER BY piadas.visualizacoes * media DESC LIMIT ${offset}, ${limit};`).then(([results, metadata]) => {
+        seq.query(`SELECT piadas.*, AVG(piadas_estrelas.estrelas) as media FROM piadas INNER JOIN piadas_estrelas ON piadas.id_piada = piadas_estrelas.id_piada WHERE piadas_estrelas.createdAt >= DATE(NOW()) - INTERVAL 30 DAY GROUP BY piadas.id ORDER BY piadas.visualizacoes * media DESC LIMIT ${offset}, ${limit};`).then(([results, metadata]) => {
             resolve(results);
         }).catch((error) => {
             reject(error);
