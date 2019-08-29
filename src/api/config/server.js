@@ -15,13 +15,13 @@ server.use(restify.plugins.bodyParser({
     overrideParams: false
 }));
 
-// const rateLimit = throttle({
-//     burst: 100,
-//     rate: 10,
-//     ip: true
-// });
+const rateLimit = throttle({
+    burst: 100,
+    rate: 5,
+    ip: true
+});
 
-// server.use(rateLimit);
+server.use(rateLimit);
 
 server.pre((request, response, next) => {
     response.charSet('utf-8');
