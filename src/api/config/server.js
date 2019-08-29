@@ -1,6 +1,6 @@
 const fs = require('fs');
-const https = require('https');
 const restify = require('restify');
+const throttle = require('micron-throttle');
 const port = process.env.PORT || 3000;
 const server = restify.createServer({
     key: fs.readFileSync(__dirname + '/ssl/server.key', 'utf8'),
@@ -14,6 +14,14 @@ server.use(restify.plugins.bodyParser({
     mapFiles: false,
     overrideParams: false
 }));
+
+const rateLimit = throttle({
+    burst: 100,
+    rate: 10,
+    ip: true
+});
+
+server.use(rateLimit);
 
 server.pre((request, response, next) => {
     response.charSet('utf-8');
