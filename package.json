@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.458.0",
-    "bcrypt": "^3.0.6",
+    "bcrypt": "^5.0.0",
     "big-integer": "^1.6.44",
     "busca-br": "^0.2.1",
     "faker": "^4.1.0",
