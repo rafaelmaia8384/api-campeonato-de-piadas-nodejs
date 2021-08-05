@@ -1,0 +1,47 @@
+# OS X
+.DS_Store*
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+*~
+
+# npm
+node_modules
+*.log
+*.gz
+
+# Coveralls
+coverage
+
+# Benchmarking
+benchmarks/graphs
+
+# File uploads
+tmp/*
+
+# Intellij files
+.idea
+.vscode
+*.iml
+.eslintcache
+
+# Environment configuration
+*.env
+
+# Hidden environment configuration
+*.hidden
+
+# Arquivos temporarios
+*.jpg
+*.zip
+
+# Docker compose data
+mysql_data
+minio_data
